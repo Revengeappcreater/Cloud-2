@@ -1,0 +1,588 @@
+import { useState, useEffect, useRef } from "react";
+
+const style = `
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Hind+Devanagari:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #e8491d;
+    --primary-light: #ff6b42;
+    --secondary: #2e7d32;
+    --gold: #f59e0b;
+    --bg: #fff8f3;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --muted: #888;
+    --pink: #fce4ec;
+    --green-light: #e8f5e9;
+  }
+
+  body { font-family: 'Baloo 2', cursive; background: var(--bg); }
+
+  .app { max-width: 430px; margin: 0 auto; min-height: 100vh; position: relative; background: var(--bg); overflow-x: hidden; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #e8491d 0%, #c0392b 100%);
+    padding: 16px 16px 20px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 20px rgba(232,73,29,0.4);
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .logo { color: white; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: #ffd54f; }
+  .header-icons { display: flex; gap: 10px; }
+  .icon-btn { background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; cursor: pointer; position: relative; }
+  .badge { position: absolute; top: -3px; right: -3px; background: #ffd54f; color: #1a1a1a; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .search-bar { background: white; border-radius: 50px; display: flex; align-items: center; padding: 8px 14px; gap: 8px; }
+  .search-bar input { border: none; outline: none; flex: 1; font-size: 14px; font-family: 'Baloo 2'; color: var(--text); background: transparent; }
+  .search-bar span { color: var(--muted); }
+
+  /* LOCATION */
+  .location-bar { background: white; padding: 8px 16px; display: flex; align-items: center; gap: 6px; font-size: 13px; border-bottom: 1px solid #f0e0d8; }
+  .location-bar .loc-icon { color: var(--primary); }
+  .location-bar strong { color: var(--text); font-weight: 700; }
+  .location-bar .delivery { margin-left: auto; color: var(--secondary); font-weight: 700; font-size: 12px; background: var(--green-light); padding: 3px 8px; border-radius: 20px; }
+
+  /* FLASH BANNER */
+  .flash-banner {
+    background: linear-gradient(90deg, #1a237e 0%, #283593 50%, #1565c0 100%);
+    color: white; padding: 8px 16px; display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 600; overflow: hidden;
+  }
+  .flash-banner .tag { background: #ffd54f; color: #1a1a1a; padding: 2px 8px; border-radius: 20px; font-weight: 800; font-size: 11px; white-space: nowrap; }
+  .marquee-text { animation: marquee 12s linear infinite; white-space: nowrap; }
+  @keyframes marquee { from { transform: translateX(100px); } to { transform: translateX(-400px); } }
+
+  /* TIMER STRIP */
+  .timer-strip { background: var(--primary); color: white; padding: 6px 16px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px; }
+  .timer-boxes { display: flex; gap: 6px; }
+  .t-box { background: rgba(0,0,0,0.3); border-radius: 6px; padding: 2px 8px; font-weight: 800; font-size: 15px; min-width: 36px; text-align: center; }
+
+  /* HERO CAROUSEL */
+  .hero { padding: 12px 16px 0; }
+  .carousel { position: relative; border-radius: 20px; overflow: hidden; }
+  .carousel-slide {
+    height: 170px; display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 20px; position: relative; overflow: hidden;
+  }
+  .slide-1 { background: linear-gradient(135deg, #ff6b42, #e8491d); }
+  .slide-2 { background: linear-gradient(135deg, #2e7d32, #43a047); }
+  .slide-3 { background: linear-gradient(135deg, #6a1b9a, #8e24aa); }
+  .slide-content { z-index: 2; }
+  .slide-content .offer-tag { background: #ffd54f; color: #1a1a1a; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; display: inline-block; margin-bottom: 6px; }
+  .slide-content h2 { color: white; font-size: 22px; font-weight: 800; line-height: 1.1; }
+  .slide-content p { color: rgba(255,255,255,0.85); font-size: 12px; margin-top: 4px; }
+  .slide-btn { margin-top: 10px; background: white; color: var(--primary); border: none; padding: 7px 16px; border-radius: 50px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: 'Baloo 2'; }
+  .slide-img { font-size: 70px; z-index: 2; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
+  .slide-circle { position: absolute; right: -30px; top: -30px; width: 160px; height: 160px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+  .dots { display: flex; justify-content: center; gap: 5px; margin-top: 8px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #ddd; transition: all 0.3s; }
+  .dot.active { background: var(--primary); width: 18px; border-radius: 3px; }
+
+  /* SOCIAL PROOF */
+  .social-proof { margin: 10px 16px; background: linear-gradient(135deg, #fff3e0, #fce4ec); border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; border: 1px solid #ffccbc; }
+  .social-proof .avatars { display: flex; }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--primary); border: 2px solid white; margin-left: -6px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; }
+  .avatar:first-child { margin-left: 0; }
+  .social-proof p { font-size: 12px; color: #555; flex: 1; line-height: 1.4; }
+  .social-proof p strong { color: var(--primary); }
+
+  /* FREE DELIVERY PROGRESS */
+  .delivery-progress { margin: 0 16px 12px; background: white; border-radius: 16px; padding: 12px 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+  .dp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .dp-header span { font-size: 13px; font-weight: 700; color: var(--text); }
+  .dp-header .dp-amount { color: var(--primary); font-weight: 800; }
+  .progress-bar { background: #f0e0d8; border-radius: 50px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), #66bb6a); border-radius: 50px; transition: width 0.5s ease; }
+  .dp-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+  /* SECTION */
+  .section { margin-top: 16px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; margin-bottom: 12px; }
+  .section-header h3 { font-size: 18px; font-weight: 800; color: var(--text); }
+  .section-header h3 span { color: var(--primary); }
+  .see-all { color: var(--primary); font-size: 13px; font-weight: 700; background: #fff0eb; padding: 4px 12px; border-radius: 20px; cursor: pointer; }
+
+  /* CATEGORIES */
+  .cats-scroll { display: flex; gap: 10px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+  .cats-scroll::-webkit-scrollbar { display: none; }
+  .cat-chip {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    min-width: 72px; background: white; border-radius: 16px; padding: 12px 10px;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    transition: all 0.2s; border: 2px solid transparent;
+  }
+  .cat-chip.active { border-color: var(--primary); background: #fff0eb; }
+  .cat-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.12); }
+  .cat-chip .cat-emoji { font-size: 28px; }
+  .cat-chip .cat-name { font-size: 11px; font-weight: 700; color: var(--text); text-align: center; }
+
+  /* PRODUCTS */
+  .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
+  .product-card {
+    background: white; border-radius: 20px; overflow: hidden;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.08); position: relative;
+    cursor: pointer; transition: transform 0.2s;
+  }
+  .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.13); }
+  .product-card:active { transform: scale(0.97); }
+  .product-img { height: 110px; display: flex; align-items: center; justify-content: center; font-size: 54px; position: relative; }
+  .product-img.bg1 { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
+  .product-img.bg2 { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+  .product-img.bg3 { background: linear-gradient(135deg, #fce4ec, #f8bbd0); }
+  .product-img.bg4 { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+  .discount-badge { position: absolute; top: 8px; left: 8px; background: var(--primary); color: white; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+  .bestseller-badge { position: absolute; top: 8px; right: 8px; background: var(--gold); color: white; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+  .product-info { padding: 10px 12px 12px; }
+  .product-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .product-weight { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .product-bottom { display: flex; align-items: center; justify-content: space-between; }
+  .prices { display: flex; flex-direction: column; }
+  .current-price { font-size: 16px; font-weight: 800; color: var(--primary); }
+  .old-price { font-size: 11px; color: var(--muted); text-decoration: line-through; }
+  .add-btn { background: var(--primary); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 700; box-shadow: 0 3px 10px rgba(232,73,29,0.4); transition: all 0.15s; }
+  .add-btn:hover { transform: scale(1.1); }
+  .qty-ctrl { display: flex; align-items: center; gap: 6px; }
+  .qty-btn { background: var(--primary); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 700; }
+  .qty-num { font-weight: 800; font-size: 15px; min-width: 20px; text-align: center; }
+  .viewers-tag { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--primary); font-weight: 600; margin-top: 6px; }
+
+  /* DEALS SECTION */
+  .deals-scroll { display: flex; gap: 12px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+  .deals-scroll::-webkit-scrollbar { display: none; }
+  .deal-card {
+    min-width: 140px; background: white; border-radius: 18px;
+    overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.08); cursor: pointer;
+  }
+  .deal-img { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .deal-d1 { background: linear-gradient(135deg, #fce4ec, #f8bbd0); }
+  .deal-d2 { background: linear-gradient(135deg, #e8f5e9, #a5d6a7); }
+  .deal-d3 { background: linear-gradient(135deg, #fffde7, #fff9c4); }
+  .deal-info { padding: 8px 10px; }
+  .deal-info .deal-name { font-size: 12px; font-weight: 700; }
+  .deal-combo { font-size: 10px; color: var(--muted); }
+  .deal-price-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+  .deal-price { color: var(--primary); font-weight: 800; font-size: 14px; }
+  .deal-save { background: var(--green-light); color: var(--secondary); font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 700; }
+
+  /* RECIPE SECTION */
+  .recipe-card {
+    margin: 0 16px; background: white; border-radius: 20px; padding: 16px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.07); cursor: pointer;
+  }
+  .recipe-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .recipe-header .recipe-icon { font-size: 36px; }
+  .recipe-header h4 { font-size: 16px; font-weight: 800; }
+  .recipe-header p { font-size: 12px; color: var(--muted); }
+  .recipe-items { display: flex; gap: 8px; flex-wrap: wrap; }
+  .recipe-item { background: var(--bg); border-radius: 50px; padding: 5px 12px; font-size: 12px; font-weight: 600; border: 1px dashed #ddd; }
+  .recipe-btn { width: 100%; margin-top: 12px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 12px; border-radius: 50px; font-weight: 800; font-size: 14px; cursor: pointer; font-family: 'Baloo 2'; }
+
+  /* LOYALTY */
+  .loyalty-card {
+    margin: 0 16px; background: linear-gradient(135deg, #1a237e, #283593);
+    border-radius: 20px; padding: 16px 18px; color: white;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .loyalty-icon { font-size: 40px; }
+  .loyalty-info h4 { font-size: 16px; font-weight: 800; }
+  .loyalty-info p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+  .loyalty-points { margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+  .points-val { font-size: 22px; font-weight: 800; color: #ffd54f; }
+  .points-label { font-size: 11px; opacity: 0.8; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: sticky; bottom: 0; background: white; padding: 10px 0 16px;
+    display: flex; justify-content: space-around; align-items: center;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1); border-top: 1px solid #f0e0d8;
+    z-index: 100;
+  }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; font-weight: 700; color: var(--muted); }
+  .nav-item.active .nav-label { color: var(--primary); }
+
+  /* CART NUDGE */
+  .cart-nudge {
+    position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
+    background: var(--secondary); color: white; padding: 12px 20px;
+    border-radius: 50px; display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 8px 24px rgba(46,125,50,0.4); z-index: 200;
+    animation: nudgeSlide 0.4s ease;
+    max-width: 380px; width: calc(100% - 32px);
+  }
+  @keyframes nudgeSlide { from { transform: translateX(-50%) translateY(30px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+  .cart-nudge span { font-size: 14px; font-weight: 700; flex: 1; }
+  .nudge-btn { background: white; color: var(--secondary); border: none; padding: 6px 14px; border-radius: 50px; font-weight: 800; font-size: 13px; cursor: pointer; white-space: nowrap; font-family: 'Baloo 2'; }
+
+  /* RECENTLY VIEWED */
+  .recent-scroll { display: flex; gap: 10px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+  .recent-scroll::-webkit-scrollbar { display: none; }
+  .recent-card { min-width: 80px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: white; border-radius: 14px; padding: 10px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); cursor: pointer; }
+  .recent-card .r-emoji { font-size: 30px; }
+  .recent-card .r-name { font-size: 10px; font-weight: 700; text-align: center; color: var(--text); }
+  .recent-card .r-price { font-size: 11px; font-weight: 800; color: var(--primary); }
+`;
+
+const products = [
+  { id: 1, name: "Amul Taza Milk", weight: "1 Litre", price: 58, mrp: 62, emoji: "🥛", discount: "6%", viewers: 23, bg: "bg1" },
+  { id: 2, name: "Fortune Rice Bran Oil", weight: "1 Litre", price: 135, mrp: 160, emoji: "🫙", discount: "16%", best: true, bg: "bg2" },
+  { id: 3, name: "Aashirvaad Atta", weight: "5 Kg", price: 240, mrp: 285, emoji: "🌾", discount: "16%", viewers: 41, bg: "bg3" },
+  { id: 4, name: "Tata Salt", weight: "1 Kg", price: 22, mrp: 26, emoji: "🧂", discount: "15%", best: true, bg: "bg4" },
+  { id: 5, name: "Amul Butter", weight: "500g", price: 110, mrp: 130, emoji: "🧈", discount: "15%", bg: "bg1" },
+  { id: 6, name: "Saffola Oats", weight: "400g", price: 78, mrp: 95, emoji: "🥣", discount: "18%", viewers: 17, bg: "bg2" },
+];
+
+const categories = [
+  { emoji: "🥛", name: "दूध & डेरी" },
+  { emoji: "🌾", name: "धान्य" },
+  { emoji: "🧹", name: "क्लीनिंग" },
+  { emoji: "🥗", name: "भाजी" },
+  { emoji: "🍫", name: "स्नॅक्स" },
+  { emoji: "💄", name: "सौंदर्य" },
+  { emoji: "👶", name: "बाळ" },
+  { emoji: "💊", name: "आरोग्य" },
+];
+
+const slides = [
+  { class: "slide-1", tag: "🎉 आजची ऑफर", h2: "50% पर्यंत सूट!", p: "दैनंदिन वस्तूंवर", emoji: "🛒", btn: "आत्ताच पहा" },
+  { class: "slide-2", tag: "🥗 ताजे आणा", h2: "भाज्या ₹10 पासून", p: "रोज सकाळी ताजे", emoji: "🥦", btn: "ऑर्डर करा" },
+  { class: "slide-3", tag: "💄 ब्युटी सेल", h2: "महिलांसाठी स्पेशल", p: "1500+ प्रॉडक्ट्स", emoji: "✨", btn: "खरेदी करा" },
+];
+
+export default function KiranaMallApp() {
+  const [cart, setCart] = useState({});
+  const [cartTotal, setCartTotal] = useState(0);
+  const [slide, setSlide] = useState(0);
+  const [activeCat, setActiveCat] = useState(0);
+  const [showNudge, setShowNudge] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ h: 4, m: 23, s: 47 });
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlide(s => (s + 1) % slides.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setTimeLeft(prev => {
+        let { h, m, s } = prev;
+        s--;
+        if (s < 0) { s = 59; m--; }
+        if (m < 0) { m = 59; h--; }
+        if (h < 0) return prev;
+        return { h, m, s };
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const addToCart = (id) => {
+    setCart(prev => {
+      const newCart = { ...prev, [id]: (prev[id] || 0) + 1 };
+      const total = Object.entries(newCart).reduce((sum, [pid, qty]) => {
+        const p = products.find(x => x.id === parseInt(pid));
+        return sum + (p ? p.price * qty : 0);
+      }, 0);
+      const count = Object.values(newCart).reduce((a, b) => a + b, 0);
+      setCartTotal(total);
+      setCartCount(count);
+      if (total > 0 && total < 299) setShowNudge(true);
+      return newCart;
+    });
+  };
+
+  const removeFromCart = (id) => {
+    setCart(prev => {
+      const newCart = { ...prev };
+      if (newCart[id] > 1) newCart[id]--;
+      else delete newCart[id];
+      const total = Object.entries(newCart).reduce((sum, [pid, qty]) => {
+        const p = products.find(x => x.id === parseInt(pid));
+        return sum + (p ? p.price * qty : 0);
+      }, 0);
+      setCartTotal(total);
+      setCartCount(Object.values(newCart).reduce((a, b) => a + b, 0));
+      return newCart;
+    });
+  };
+
+  useEffect(() => {
+    if (showNudge) {
+      const t = setTimeout(() => setShowNudge(false), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [showNudge, cartTotal]);
+
+  const progress = Math.min((cartTotal / 299) * 100, 100);
+  const remaining = Math.max(299 - cartTotal, 0);
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  return (
+    <div style={{ fontFamily: "'Baloo 2', cursive" }}>
+      <style>{style}</style>
+      <div className="app">
+
+        {/* HEADER */}
+        <div className="header">
+          <div className="header-top">
+            <div className="logo">किराणा <span>मॉल</span> 🛍️</div>
+            <div className="header-icons">
+              <button className="icon-btn">🔔 <span className="badge">3</span></button>
+              <button className="icon-btn">🛒 <span className="badge">{cartCount}</span></button>
+            </div>
+          </div>
+          <div className="search-bar">
+            <span>🔍</span>
+            <input placeholder="तुम्हाला काय हवे आहे? शोधा..." />
+          </div>
+        </div>
+
+        {/* LOCATION */}
+        <div className="location-bar">
+          <span className="loc-icon">📍</span>
+          <span>पत्ता: <strong>पुणे, MH 411001</strong></span>
+          <span className="delivery">⚡ 30 मिनिटांत डिलिव्हरी</span>
+        </div>
+
+        {/* FLASH BANNER */}
+        <div className="flash-banner">
+          <span className="tag">🔥 FLASH SALE</span>
+          <span className="marquee-text">आज रात्री 12 वाजेपर्यंत — तेल, साखर, डाळ 40% सूट • नवीन युजर्सला ₹100 कूपन • महिला स्पेशल: सौंदर्य प्रसाधने 60% सूट!</span>
+        </div>
+
+        {/* TIMER */}
+        <div className="timer-strip">
+          <span>⏰ ऑफर संपेल:</span>
+          <div className="timer-boxes">
+            <div className="t-box">{pad(timeLeft.h)}</div>
+            <span style={{ fontWeight: 800, fontSize: 18 }}>:</span>
+            <div className="t-box">{pad(timeLeft.m)}</div>
+            <span style={{ fontWeight: 800, fontSize: 18 }}>:</span>
+            <div className="t-box">{pad(timeLeft.s)}</div>
+          </div>
+        </div>
+
+        {/* HERO CAROUSEL */}
+        <div className="hero">
+          <div className="carousel">
+            {slides.map((s, i) => (
+              <div key={i} className={`carousel-slide ${s.class}`} style={{ display: i === slide ? "flex" : "none" }}>
+                <div className="slide-circle" />
+                <div className="slide-content">
+                  <span className="offer-tag">{s.tag}</span>
+                  <h2>{s.h2}</h2>
+                  <p>{s.p}</p>
+                  <button className="slide-btn">{s.btn} →</button>
+                </div>
+                <div className="slide-img">{s.emoji}</div>
+              </div>
+            ))}
+          </div>
+          <div className="dots">
+            {slides.map((_, i) => <div key={i} className={`dot ${i === slide ? "active" : ""}`} />)}
+          </div>
+        </div>
+
+        {/* SOCIAL PROOF */}
+        <div className="social-proof">
+          <div className="avatars">
+            {["स", "प", "र", "म"].map((a, i) => <div key={i} className="avatar">{a}</div>)}
+          </div>
+          <p>मागच्या 1 तासात <strong>247 महिलांनी</strong> खरेदी केली! तुम्हीही आत्ताच ऑर्डर करा 🎉</p>
+        </div>
+
+        {/* FREE DELIVERY PROGRESS */}
+        <div className="delivery-progress">
+          <div className="dp-header">
+            <span>🚚 Free Delivery प्रगती</span>
+            <span className="dp-amount">₹{cartTotal} / ₹299</span>
+          </div>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+          {remaining > 0
+            ? <p className="dp-hint">आणखी ₹{remaining} ची खरेदी करा आणि फ्री डिलिव्हरी मिळवा! 🎁</p>
+            : <p className="dp-hint" style={{ color: "#2e7d32", fontWeight: 700 }}>🎉 अभिनंदन! तुम्हाला Free Delivery मिळाली!</p>
+          }
+        </div>
+
+        {/* CATEGORIES */}
+        <div className="section">
+          <div className="section-header">
+            <h3>श्रेणी <span>निवडा</span></h3>
+            <span className="see-all">सर्व पहा</span>
+          </div>
+          <div className="cats-scroll">
+            {categories.map((c, i) => (
+              <div key={i} className={`cat-chip ${activeCat === i ? "active" : ""}`} onClick={() => setActiveCat(i)}>
+                <span className="cat-emoji">{c.emoji}</span>
+                <span className="cat-name">{c.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RECIPE SUGGESTION */}
+        <div className="section">
+          <div className="recipe-card">
+            <div className="recipe-header">
+              <div className="recipe-icon">🍛</div>
+              <div>
+                <h4>आजच्या जेवणासाठी — पुलाव?</h4>
+                <p>AI ने तुमच्यासाठी सुचवले • 7 वस्तू लागतील</p>
+              </div>
+            </div>
+            <div className="recipe-items">
+              {["बासमती तांदूळ", "हिरवे वाटाणे", "तूप", "मसाला", "कांदे", "टोमॅटो", "धणे"].map((item, i) => (
+                <span key={i} className="recipe-item">{item}</span>
+              ))}
+            </div>
+            <button className="recipe-btn">🛒 सर्व वस्तू कार्टमध्ये टाका — ₹180 मध्ये</button>
+          </div>
+        </div>
+
+        {/* HOT DEALS */}
+        <div className="section">
+          <div className="section-header">
+            <h3>🔥 <span>आजचे Combo</span> डील्स</h3>
+            <span className="see-all">सर्व पहा</span>
+          </div>
+          <div className="deals-scroll">
+            {[
+              { emoji: "🥛🧈", name: "ब्रेकफास्ट कॉम्बो", combo: "दूध + बटर + ब्रेड", price: "₹95", save: "₹35 वाचले", cls: "deal-d1" },
+              { emoji: "🌾🫙", name: "स्वयंपाक कॉम्बो", combo: "आटा + तेल", price: "₹340", save: "₹50 वाचले", cls: "deal-d2" },
+              { emoji: "🧴💄", name: "ब्युटी कॉम्बो", combo: "क्रीम + फेसवॉश", price: "₹199", save: "₹80 वाचले", cls: "deal-d3" },
+              { emoji: "🧹🫧", name: "क्लीनिंग किट", combo: "डिटर्जंट + फिनाइल", price: "₹155", save: "₹45 वाचले", cls: "deal-d1" },
+            ].map((d, i) => (
+              <div key={i} className="deal-card">
+                <div className={`deal-img ${d.cls}`}>{d.emoji}</div>
+                <div className="deal-info">
+                  <div className="deal-name">{d.name}</div>
+                  <div className="deal-combo">{d.combo}</div>
+                  <div className="deal-price-row">
+                    <span className="deal-price">{d.price}</span>
+                    <span className="deal-save">{d.save}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* PRODUCTS */}
+        <div className="section">
+          <div className="section-header">
+            <h3>⭐ <span>बेस्टसेलर</span> वस्तू</h3>
+            <span className="see-all">सर्व पहा</span>
+          </div>
+          <div className="products-grid">
+            {products.map(p => (
+              <div key={p.id} className="product-card">
+                <div className={`product-img ${p.bg}`}>
+                  <span>{p.emoji}</span>
+                  <span className="discount-badge">{p.discount} OFF</span>
+                  {p.best && <span className="bestseller-badge">⭐ Best</span>}
+                </div>
+                <div className="product-info">
+                  <div className="product-name">{p.name}</div>
+                  <div className="product-weight">{p.weight}</div>
+                  {p.viewers && (
+                    <div className="viewers-tag">
+                      👁️ {p.viewers} जण आत्ता पाहत आहेत
+                    </div>
+                  )}
+                  <div className="product-bottom">
+                    <div className="prices">
+                      <span className="current-price">₹{p.price}</span>
+                      <span className="old-price">₹{p.mrp}</span>
+                    </div>
+                    {cart[p.id] ? (
+                      <div className="qty-ctrl">
+                        <button className="qty-btn" onClick={() => removeFromCart(p.id)}>−</button>
+                        <span className="qty-num">{cart[p.id]}</span>
+                        <button className="qty-btn" onClick={() => addToCart(p.id)}>+</button>
+                      </div>
+                    ) : (
+                      <button className="add-btn" onClick={() => addToCart(p.id)}>+</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RECENTLY VIEWED */}
+        <div className="section">
+          <div className="section-header">
+            <h3>👀 <span>नुकतेच</span> पाहिलेले</h3>
+          </div>
+          <div className="recent-scroll">
+            {[
+              { emoji: "🫙", name: "सरसों तेल", price: "₹165" },
+              { emoji: "🍫", name: "Bournvita", price: "₹220" },
+              { emoji: "🧴", name: "Fair & Lovely", price: "₹85" },
+              { emoji: "🥚", name: "अंडी 12 पीस", price: "₹72" },
+              { emoji: "🍵", name: "ताज चहा", price: "₹95" },
+              { emoji: "🧹", name: "Vim बार", price: "₹35" },
+            ].map((r, i) => (
+              <div key={i} className="recent-card">
+                <span className="r-emoji">{r.emoji}</span>
+                <span className="r-name">{r.name}</span>
+                <span className="r-price">{r.price}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* LOYALTY */}
+        <div className="section" style={{ marginBottom: 16 }}>
+          <div className="loyalty-card">
+            <div className="loyalty-icon">👑</div>
+            <div className="loyalty-info">
+              <h4>किराणा मॉल पॉइंट्स</h4>
+              <p>खरेदी करा, पॉइंट्स मिळवा, सूट घ्या!</p>
+              <div className="loyalty-points">
+                <span className="points-val">₹50</span>
+                <span className="points-label">पर्यंत रिवॉर्ड्स उपलब्ध</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CART NUDGE */}
+        {showNudge && (
+          <div className="cart-nudge">
+            <span>🎁 आणखी ₹{remaining} ची खरेदी करा → Free Delivery!</span>
+            <button className="nudge-btn">पहा →</button>
+          </div>
+        )}
+
+        {/* BOTTOM NAV */}
+        <div className="bottom-nav">
+          {[
+            { icon: "🏠", label: "होम", active: true },
+            { icon: "🔍", label: "शोधा" },
+            { icon: "💖", label: "आवडते" },
+            { icon: "🛒", label: `कार्ट ${cartCount > 0 ? `(${cartCount})` : ""}` },
+            { icon: "👤", label: "अकाउंट" },
+          ].map((n, i) => (
+            <div key={i} className={`nav-item ${n.active ? "active" : ""}`}>
+              <span className="nav-icon">{n.icon}</span>
+              <span className="nav-label">{n.label}</span>
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+}
